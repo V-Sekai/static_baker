@@ -1,4 +1,4 @@
-tool
+@tool
 extends EditorPlugin
 
 const static_baker_group_const = preload("static_baker_group.gd")
@@ -25,7 +25,7 @@ func _process_static_baker_group() -> void:
 			update_button_label()
 
 
-func handles(p_object) -> bool:
+func _handles(p_object) -> bool:
 	if p_object is Node:
 		var is_top_level = p_object.get_owner() == null
 		var is_external = p_object.get_filename() != ""
@@ -34,7 +34,7 @@ func handles(p_object) -> bool:
 	return false
 
 
-func make_visible(p_visible: bool) -> void:
+func _make_visible(p_visible: bool) -> void:
 	if button:
 		if p_visible:
 			update_button_label()
@@ -43,14 +43,14 @@ func make_visible(p_visible: bool) -> void:
 			button.hide()
 
 
-func edit(p_object) -> void:
+func _edit(p_object) -> void:
 	if p_object == null || selected_node == p_object:
 		return
 
 	selected_node = p_object
 
 
-func _init() -> void:
+func _init():
 	print("Initialising StaticBaker plugin")
 
 
@@ -65,10 +65,10 @@ func _enter_tree() -> void:
 
 	button = Button.new()
 	button.set_button_icon(
-		editor_interface.get_base_control().get_icon("BakedLightmap", "EditorIcons")
+		editor_interface.get_base_control().get_theme_icon("LightmapGI", "EditorIcons")
 	)
 	button.set_tooltip("Convert collection of static meshes into a single mesh.")
-	button.connect("pressed", self, "_process_static_baker_group")
+	button.connect("pressed", Callable(self, "_process_static_baker_group"))
 
 	button.hide()
 	add_control_to_container(CONTAINER_SPATIAL_EDITOR_MENU, button)

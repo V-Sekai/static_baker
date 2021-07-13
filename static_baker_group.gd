@@ -1,16 +1,16 @@
-extends Spatial
-class_name StaticBakerGroup
-tool
+@tool
+class_name StaticBakerGroup extends Node3D
+
 
 const material_replacer_const = preload("material_replacer.gd")
 const mesh_combiner_const = preload("res://addons/mesh_combiner/mesh_combiner.gd")
 
-export (Array) var original_instances: Array = []
+@export  var original_instances: Array # (Array) = []
 var material_replacer_count: int = 0  # setget set_material_replacer_count
 var material_replacers: Array = []
 
-export (float) var weld_distance: float = 0.000001
-export (bool) var use_vertex_compression: bool = false
+@export  var weld_distance: float # (float) = 0.000001
+@export  var use_vertex_compression: bool # (bool) = false
 
 
 func set_material_replacer_count(p_count: int) -> void:
@@ -20,10 +20,10 @@ func set_material_replacer_count(p_count: int) -> void:
 	if material_replacer_count != initial_count:
 		material_replacers.resize(material_replacer_count)
 
-	property_list_changed_notify()
+	notify_property_list_changed()
 
 
-func set_material_replacer(p_idx: int, p_material_replacer: material_replacer_const) -> void:
+func set_material_replacer(p_idx: int, p_material_replacer: Object) -> void:
 	if p_idx >= material_replacers.size() || p_idx < 0:
 		return
 
@@ -31,7 +31,7 @@ func set_material_replacer(p_idx: int, p_material_replacer: material_replacer_co
 		material_replacers[p_idx] = p_material_replacer
 	else:
 		material_replacers[p_idx] = null
-	property_list_changed_notify()
+	notify_property_list_changed()
 
 	execute_material_replacers()
 
@@ -88,7 +88,7 @@ func replace_materials(p_material_replacers: Array, p_instances: Dictionary) -> 
 	var mesh_instances: Array = p_instances["mesh_instances"]
 
 	for mesh_instance in mesh_instances:
-		if mesh_instance is MeshInstance:
+		if mesh_instance is MeshInstance3D:
 			var mesh: Mesh = mesh_instance.mesh
 
 			if mesh is ArrayMesh:
@@ -131,17 +131,17 @@ func execute_material_replacers():
 
 func restore_backup(p_editor_interface: EditorInterface) -> void:
 	destroy_children()
-	for instance in original_instances:
-		var packed_scene: PackedScene = load(instance.path)
-		var instanced_scene: Node = packed_scene.instance(true)
-		instanced_scene.set_filename(ProjectSettings.localize_path(instance.path))
+	for instantiate in original_instances:
+		var packed_scene: PackedScene = load(instantiate.path)
+		var instanced_scene: Node = packed_scene.instantiate(true)
+		instanced_scene.set_filename(ProjectSettings.localize_path(instantiate.path))
 		add_child(instanced_scene)
-		instanced_scene.set_transform(instance.transform)
+		instanced_scene.set_transform(instantiate.transform)
 		if p_editor_interface:
 			instanced_scene.set_owner(p_editor_interface.get_edited_scene_root())
 	original_instances = []
 	execute_material_replacers()
-	property_list_changed_notify()
+	notify_property_list_changed()
 
 
 func backup_children() -> void:
@@ -150,7 +150,7 @@ func backup_children() -> void:
 			original_instances.append(
 				{"path": child.get_filename(), "transform": child.get_transform()}
 			)
-	property_list_changed_notify()
+	notify_property_list_changed()
 
 
 func destroy_children() -> void:
@@ -168,9 +168,9 @@ static func process_child_instances(
 	p_bake_children: bool
 ) -> Dictionary:
 	for child in p_node.get_children():
-		if child is MeshInstance and child.get_mesh() != null:
+		if child is MeshInstance3D and child.get_mesh() != null:
 			p_dictionary["mesh_instances"].append(child)
-		elif child is StaticBody:
+		elif child is StaticBody3D:
 			if p_include_static_bodies:
 				p_dictionary["static_bodies"].append(child)
 		else:
@@ -210,7 +210,7 @@ func combine_instances(p_editor_interface: EditorInterface) -> void:
 		true
 	)
 
-	var mesh_combiner: mesh_combiner_const = mesh_combiner_const.new()
+	var mesh_combiner = mesh_combiner_const.new()
 	var saved_mesh_instances: Array = []
 	var saved_static_bodies: Array = []
 
@@ -219,7 +219,7 @@ func combine_instances(p_editor_interface: EditorInterface) -> void:
 
 	# Save all the valid mesh instances
 	for mesh_instance in mesh_instances:
-		if mesh_instance is MeshInstance:
+		if mesh_instance is MeshInstance3D:
 			saved_mesh_instances.append(
 				{
 					"mesh": mesh_instance.get_mesh(),
@@ -238,16 +238,16 @@ func combine_instances(p_editor_interface: EditorInterface) -> void:
 			Vector2(0.0, 0.0),
 			Vector2(1.0, 1.0),
 			saved_mesh_instance.transform,
-			PoolIntArray(),
+			PackedInt64Array(),
 			weld_distance
 		)
 		print("Done!")
 
 	# Save and unparent static bodies
 	for static_body in static_bodies:
-		if static_body is StaticBody:
+		if static_body is StaticBody3D:
 			saved_static_bodies.append(
-				{"instance": static_body, "transform": static_body.get_global_transform()}
+				{"instantiate": static_body, "transform": static_body.get_global_transform()}
 			)
 			static_body.get_parent().remove_child(static_body)
 
@@ -263,7 +263,7 @@ func combine_instances(p_editor_interface: EditorInterface) -> void:
 	destroy_children()
 
 	if combined_mesh != null:
-		var new_mesh_instance: MeshInstance = MeshInstance.new()
+		var new_mesh_instance: MeshInstance3D = MeshInstance3D.new()
 		new_mesh_instance.set_mesh(combined_mesh)
 		new_mesh_instance.set_name("CombinedMesh")
 		add_child(new_mesh_instance)
@@ -273,14 +273,14 @@ func combine_instances(p_editor_interface: EditorInterface) -> void:
 	# Static bodies
 
 	for saved_static_body in saved_static_bodies:
-		var instance: Node = saved_static_body.instance
-		add_child(saved_static_body.instance)
-		instance.set_global_transform(saved_static_body.transform)
+		var instantiate: Node = saved_static_body.instantiate
+		add_child(saved_static_body.instantiate)
+		instantiate.set_global_transform(saved_static_body.transform)
 
 		# Setup ownership
 		if p_editor_interface:
-			instance.set_owner(p_editor_interface.get_edited_scene_root())
-			for child in instance.get_children():
+			instantiate.set_owner(p_editor_interface.get_edited_scene_root())
+			for child in instantiate.get_children():
 				child.set_owner(p_editor_interface.get_edited_scene_root())
 
 	execute_material_replacers()

@@ -1,6 +1,6 @@
-tool
-extends Resource
-class_name MaterialReplacer
+@tool
+class_name MaterialReplacer extends Resource
+
 
 
 class MaterialSwap:
@@ -42,7 +42,7 @@ func _get(p_property: String):
 		if split_property[0] == "material_swap" and split_property.size() > 1:
 			if split_property[1] == "count" and split_property.size() == 2:
 				return material_swaps.size()
-			elif split_property[1].is_valid_integer() and split_property.size() == 3:
+			elif split_property[1].is_valid_int() and split_property.size() == 3:
 				var index: int = split_property[1].to_int()
 				if index < material_swaps.size():
 					if split_property[2] == "original_material":
@@ -67,9 +67,9 @@ func _set(p_property: String, p_value) -> bool:
 						if p_value > initial_size:
 							for i in range(initial_size, p_value):
 								material_swaps[i] = MaterialSwap.new()
-						property_list_changed_notify()
+						notify_property_list_changed()
 					return true
-			elif split_property[1].is_valid_integer() and split_property.size() == 3:
+			elif split_property[1].is_valid_int() and split_property.size() == 3:
 				if (p_value != null and p_value is Material) or p_value == null:
 					var index: int = split_property[1].to_int()
 					if index < material_swaps.size():
