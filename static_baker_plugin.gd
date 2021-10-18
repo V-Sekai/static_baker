@@ -28,7 +28,7 @@ func _process_static_baker_group() -> void:
 func _handles(p_object) -> bool:
 	if p_object is Node:
 		var is_top_level = p_object.get_owner() == null
-		var is_external = p_object.get_filename() != ""
+		var is_external = p_object.get_scene_file_path() != ""
 		return p_object.get_script() == static_baker_group_const and (is_top_level or ! is_external)
 
 	return false

@@ -134,7 +134,7 @@ func restore_backup(p_editor_interface: EditorInterface) -> void:
 	for instantiate in original_instances:
 		var packed_scene: PackedScene = load(instantiate.path)
 		var instanced_scene: Node = packed_scene.instantiate(true)
-		instanced_scene.set_filename(ProjectSettings.localize_path(instantiate.path))
+		instanced_scene.set_scene_file_path(ProjectSettings.localize_path(instantiate.path))
 		add_child(instanced_scene)
 		instanced_scene.set_transform(instantiate.transform)
 		if p_editor_interface:
@@ -146,9 +146,9 @@ func restore_backup(p_editor_interface: EditorInterface) -> void:
 
 func backup_children() -> void:
 	for child in get_children():
-		if child.get_filename() != "" and Engine.is_editor_hint():
+		if child.get_scene_file_path() != "" and Engine.is_editor_hint():
 			original_instances.append(
-				{"path": child.get_filename(), "transform": child.get_transform()}
+				{"path": child.get_scene_file_path(), "transform": child.get_transform()}
 			)
 	notify_property_list_changed()
 
